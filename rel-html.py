@@ -17,43 +17,53 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-import urllib, sgmllib
+from HTMLParser import HTMLParser
+import urllib
 import ConfigParser
 import re
 
-class index_parser(sgmllib.SGMLParser):
+class index_parser(HTMLParser):
 	"HTML index parser for software releases class."
 	def parse(self, s):
 		"Parse the given string 's'."
 		self.feed(s)
 		self.close()
 
-	def __init__(self, verbose=0):
-		"Initialise an object, passing 'verbose' to the superclass."
+	def __init__(self):
+
+		HTMLParser.__init__(self)
 
 		self.config = ConfigParser.SafeConfigParser({'rel_html_proj': 'linux', 'rel_html_url_stable': 'kernel.org'})
 		self.config.read('rel-html.cfg')
+
 		self.rel_html_proj = self.config.get("project", "rel_html_proj")
 		self.rel_html_stable = self.config.get("project", "rel_html_stable")
 		self.rel_html_stable_short = self.rel_html_stable.replace('v', '')
 		self.rel_html_next = self.config.get("project", "rel_html_next")
 		self.rel_html_url_stable = self.config.get("project", "rel_html_url_stable") + '/' + self.rel_html_stable
 		self.rel_html_url_next = self.config.get("project", "rel_html_url_next")
-		sgmllib.SGMLParser.__init__(self, verbose)
+
 		self.hyperlinks = []
 		self.rels = []
 		self.signed = False
 		self.changelog = ''
 		self.signed_changelog = False
 
-	def start_a(self, attributes):
-		"Process a hyperlink and its 'attributes'."
+	def handle_starttag(self, tag, attributes):
+		"Process a tags and its 'attributes'."
+		if tag != 'a': return
 		for name, value in attributes:
+			if name != 'href': return
 			if (not value.startswith(self.rel_html_proj) and
 			    not value.startswith('ChangeLog')):
 				continue
 			if name == "href":
 				self.hyperlinks.append(value)
+
+	def handle_endtag(self, tag):
+		return
+	def handle_data(self, data):
+		return
 
 	def get_hyperlinks(self):
 		"Return the list of hyperlinks."
