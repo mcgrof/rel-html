@@ -20,13 +20,13 @@
 from HTMLParser import HTMLParser
 import urllib
 import ConfigParser
-import re
+import re, sys
 
 class index_parser(HTMLParser):
 	"HTML index parser for software releases class."
-	def parse(self, s):
+	def parse(self, html):
 		"Parse the given string 's'."
-		self.feed(s)
+		self.feed(html)
 		self.close()
 
 	def __init__(self):
@@ -71,8 +71,6 @@ class index_parser(HTMLParser):
 		rel_target = self.rel_html_proj + '-' + self.rel_html_stable_short
 		rel_changelog = 'ChangeLog-' + self.rel_html_stable
 
-		rels = []
-		changelog = ''
 		latest_rel_num = 0
 		rel_num = 0
 
@@ -97,11 +95,6 @@ class index_parser(HTMLParser):
 				self.signed = True
 				continue
 
-			if (url.startswith(rel_target) and
-			    url.endswith('tar.sign')):
-				self.signed = True
-				continue
-
 			if (url.startswith(rel_changelog) and
 			    url.endswith('.sign')):
 				self.signed_changelog = True
@@ -116,16 +109,22 @@ def main():
 	parser = index_parser()
 
 	f = urllib.urlopen(parser.rel_html_url_stable)
-	s = f.read()
+	html = f.read()
 
-	parser.parse(s)
+	parser.parse(html)
 	parser.get_hyperlinks()
 
 	if (not parser.signed):
 		print "No signed release found!"
+		sys.exit(1)
 
 	if (not parser.signed_changelog):
 		print "No signed release ChangeLog found!"
+		sys.exit(1)
+
+	if (not parser.changelog):
+		print "No ChangeLog found!"
+		sys.exit(1)
 
 	# Write HTML5 base page
 	for rel in parser.rels:
