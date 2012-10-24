@@ -104,6 +104,54 @@ class index_parser(HTMLParser):
 				self.changelog = url
 
 
+# Example full html output parser, this can be used to
+# simply read and output a full HTML file, you can modify
+# this class to help you modify the contents. We do that
+# later.
+class html_base(HTMLParser):
+	"HTML 5 generator from parsed index parser content."
+	def parse(self, html):
+		"Parse the given string 's'."
+		self.feed(html)
+		self.close()
+	def handle_decl(self, decl):
+		sys.stdout.write('<!%s>' % decl)
+	def handle_starttag(self, tag, attributes):
+		sys.stdout.write('<%s' % tag)
+		for name, value in attributes:
+			sys.stdout.write(' %s="%s"' % (name, value))
+		sys.stdout.write('>')
+	def handle_endtag(self, tag):
+		sys.stdout.write('</%s>' % tag)
+	def handle_data(self, data):
+		sys.stdout.write('%s' % data)
+	def handle_comment(self, data):
+		sys.stdout.write('<!--%s-->' % data)
+	def __init__(self):
+		HTMLParser.__init__(self)
+
+class rel_html_gen(HTMLParser):
+	"HTML 5 generator from parsed index parser content."
+	def parse(self, html):
+		"Parse the given string 's'."
+		self.feed(html)
+		self.close()
+	def handle_decl(self, decl):
+		sys.stdout.write('<!%s>' % decl)
+	def handle_starttag(self, tag, attributes):
+		sys.stdout.write('<%s' % tag)
+		for name, value in attributes:
+			sys.stdout.write(' %s="%s"' % (name, value))
+		sys.stdout.write('>')
+	def handle_endtag(self, tag):
+		sys.stdout.write('</%s>' % tag)
+	def handle_data(self, data):
+		sys.stdout.write('%s' % data)
+	def handle_comment(self, data):
+		sys.stdout.write('<!--%s-->' % data)
+	def __init__(self):
+		HTMLParser.__init__(self)
+
 def main():
 
 	parser = index_parser()
@@ -127,9 +175,15 @@ def main():
 		sys.exit(1)
 
 	# Write HTML5 base page
-	for rel in parser.rels:
-		print rel
-	print parser.changelog
+	#for rel in parser.rels:
+	#	print rel
+	#print parser.changelog
+
+	gen =  rel_html_gen()
+	f = open('index.html', 'r')
+	html = f.read()
+
+	gen.parse(html)
 
 if __name__ == "__main__":
         main()
