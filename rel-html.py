@@ -61,9 +61,9 @@ class index_parser(HTMLParser):
 				self.hyperlinks.append(value)
 
 	def handle_endtag(self, tag):
-		return
+		pass
 	def handle_data(self, data):
-		return
+		pass
 
 	def get_hyperlinks(self):
 		"Return the list of hyperlinks."
