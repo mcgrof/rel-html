@@ -171,6 +171,26 @@ class rel_html_gen(HTMLParser):
 			sys.stdout.write('\t\t\t\t<li><a href="%s">%s</a></li>\n' % (url, txt))
 		sys.stdout.write('\t\t\t</ul>\n')
 		sys.stdout.write('\t\t</nav>\n')
+	def handle_h1_release(self, tag, attributes):
+		self.skip_endtag = True
+		sys.stdout.write('%s</h1>\n' % (self.parser.html_release_title))
+		sys.stdout.write('\t\t\t<table border="1">\n')
+		sys.stdout.write('\t\t\t<tr>\n')
+		sys.stdout.write('\t\t\t<td>Release</td>\n')
+		sys.stdout.write('\t\t\t<td>ChangeLog</td>\n')
+		sys.stdout.write('\t\t\t</tr>\n')
+
+		for rel in self.parser.rels:
+
+			url_rel = self.parser.rel_html_url_stable + '/' + rel
+			url_changelog = self.parser.rel_html_url_stable + '/' + self.parser.changelog
+
+			sys.stdout.write('\t\t\t\t<tr>')
+			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (url_rel, rel))
+			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (url_changelog, self.parser.changelog))
+			sys.stdout.write('\t\t\t\t</tr>')
+
+		sys.stdout.write('\t\t\t</table>\n')
 	def handle_h1_pass(self, tag, attributes):
 		pass
 	def handle_h1(self, tag, attributes):
@@ -180,6 +200,8 @@ class rel_html_gen(HTMLParser):
 			if (name == 'id'):
 				if (value == 'top_content'):
 					def_run = self.handle_h1_top
+				elif (value == 'release_title'):
+					def_run = self.handle_h1_release
 
 		sys.stdout.write('<%s' % tag)
 		for name, value in attributes:
