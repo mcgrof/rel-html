@@ -42,6 +42,29 @@ class index_parser(HTMLParser):
 		self.rel_html_next = self.config.get("project", "rel_html_next")
 		self.rel_html_url_stable = self.config.get("project", "rel_html_url_stable") + '/' + self.rel_html_stable
 		self.rel_html_url_next = self.config.get("project", "rel_html_url_next")
+		self.rel_license = self.config.get("project", "rel_license")
+
+		self.html_title = self.config.get("html", "title")
+
+		self.html_nav_dict = ({ self.config.get("html", "nav_01_url"),
+				        self.config.get("html", "nav_01_txt") },
+				      { self.config.get("html", "nav_02_url"),
+				        self.config.get("html", "nav_02_txt") },
+				      { self.config.get("html", "nav_03_url"),
+				        self.config.get("html", "nav_03_txt") })
+
+		self.html_nav_01_url = self.config.get("html", "nav_01_url")
+		self.html_nav_01_txt = self.config.get("html", "nav_01_txt")
+
+		self.html_nav_02_url = self.config.get("html", "nav_02_url")
+		self.html_nav_02_txt = self.config.get("html", "nav_02_txt")
+
+		self.html_nav_03_url = self.config.get("html", "nav_02_url")
+		self.html_nav_03_txt = self.config.get("html", "nav_03_txt")
+
+		self.html_release_title = self.config.get("html", "release_title")
+		self.html_about_title = self.config.get("html", "about_title")
+		self.html_about = self.config.get("html", "about")
 
 		self.hyperlinks = []
 		self.rels = []
@@ -132,25 +155,66 @@ class html_base(HTMLParser):
 
 class rel_html_gen(HTMLParser):
 	"HTML 5 generator from parsed index parser content."
-	def parse(self, html):
-		"Parse the given string 's'."
-		self.feed(html)
-		self.close()
-	def handle_decl(self, decl):
-		sys.stdout.write('<!%s>' % decl)
-	def handle_starttag(self, tag, attributes):
+	def handle_title(self, tag, attributes):
+		sys.stdout.write('<%s>%s' % (tag, self.parser.html_title))
+	def handle_def_start(self, tag, attributes):
 		sys.stdout.write('<%s' % tag)
 		for name, value in attributes:
 			sys.stdout.write(' %s="%s"' % (name, value))
 		sys.stdout.write('>')
+	def handle_h1_top(self, tag, attributes):
+		self.skip_endtag = True
+		sys.stdout.write('%s</h1>\n' % (self.parser.html_title))
+		sys.stdout.write('\t\t<nav>\n')
+		sys.stdout.write('\t\t\t<ul>\n')
+		for txt, url in self.parser.html_nav_dict:
+			sys.stdout.write('\t\t\t\t<li><a href="%s">%s</a></li>\n' % (url, txt))
+		sys.stdout.write('\t\t\t</ul>\n')
+		sys.stdout.write('\t\t</nav>\n')
+	def handle_h1_pass(self, tag, attributes):
+		pass
+	def handle_h1(self, tag, attributes):
+		def_run = self.handle_h1_pass
+
+		for name, value in attributes:
+			if (name == 'id'):
+				if (value == 'top_content'):
+					def_run = self.handle_h1_top
+
+		sys.stdout.write('<%s' % tag)
+		for name, value in attributes:
+			sys.stdout.write(' %s="%s"' % (name, value))
+		sys.stdout.write('>')
+
+		def_run(tag, attributes)
+
+	def parse(self, html):
+		"Parse the given string 's'."
+		self.feed(html)
+		self.close()
+
+	def handle_decl(self, decl):
+		sys.stdout.write('<!%s>' % decl)
+	def handle_starttag(self, tag, attributes):
+		self.skip_endtag = False
+		if (tag == 'title'):
+			self.handle_title(tag, attributes)
+		elif (tag == 'h1'):
+			self.handle_h1(tag, attributes)
+		else:
+			self.handle_def_start(tag, attributes)
 	def handle_endtag(self, tag):
+		if (self.skip_endtag):
+			pass
 		sys.stdout.write('</%s>' % tag)
 	def handle_data(self, data):
 		sys.stdout.write('%s' % data)
 	def handle_comment(self, data):
 		sys.stdout.write('<!--%s-->' % data)
-	def __init__(self):
+	def __init__(self, parser):
 		HTMLParser.__init__(self)
+		self.parser = parser
+		self.skip_endtag = False
 
 def main():
 
@@ -179,7 +243,7 @@ def main():
 	#	print rel
 	#print parser.changelog
 
-	gen =  rel_html_gen()
+	gen =  rel_html_gen(parser)
 	f = open('html/template.html', 'r')
 	html = f.read()
 
