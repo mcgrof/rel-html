@@ -180,7 +180,7 @@ def main():
 	#print parser.changelog
 
 	gen =  rel_html_gen()
-	f = open('template.html', 'r')
+	f = open('html/template.html', 'r')
 	html = f.read()
 
 	gen.parse(html)
