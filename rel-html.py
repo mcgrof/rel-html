@@ -191,9 +191,13 @@ class rel_html_gen(HTMLParser):
 			sys.stdout.write('\t\t\t\t</tr>')
 
 		sys.stdout.write('\t\t\t</table>\n')
+	def handle_h1_about(self, tag, attributes):
+		self.skip_endtag = True
+		sys.stdout.write('%s</h1>\n' % (self.parser.html_about_title))
+		sys.stdout.write('<p>%s</p>\n' % (self.parser.html_about))
 	def handle_h1_pass(self, tag, attributes):
 		pass
-	def handle_h1(self, tag, attributes):
+	def handle_h(self, tag, attributes):
 		def_run = self.handle_h1_pass
 
 		for name, value in attributes:
@@ -202,6 +206,8 @@ class rel_html_gen(HTMLParser):
 					def_run = self.handle_h1_top
 				elif (value == 'release_title'):
 					def_run = self.handle_h1_release
+				elif (value == 'about'):
+					def_run = self.handle_h1_about
 
 		sys.stdout.write('<%s' % tag)
 		for name, value in attributes:
@@ -221,8 +227,8 @@ class rel_html_gen(HTMLParser):
 		self.skip_endtag = False
 		if (tag == 'title'):
 			self.handle_title(tag, attributes)
-		elif (tag == 'h1'):
-			self.handle_h1(tag, attributes)
+		elif (tag in {'h1', 'h2', 'h3'}):
+			self.handle_h(tag, attributes)
 		else:
 			self.handle_def_start(tag, attributes)
 	def handle_endtag(self, tag):
