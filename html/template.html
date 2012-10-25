@@ -22,7 +22,18 @@
 
         <div class="header-container">
             <header class="wrapper clearfix">
-                <h1 class="title">h1.title</h1>
+                <h1 class="title">h1-title-01</h1>
+<!-- This the top right links
+	We want then:
+	[html]
+	title = foo
+	ht-title-01 = Project name
+	nav-01-url = http://URL1.com
+	nav-01-txt = bleh 1
+	nav-02-url = http://URL2.com
+	nav-02-txt = bleh 2
+	nav-03-url = http://URL3.com
+	nav-03-txt = bleh 3
                 <nav>
                     <ul>
                         <li><a href="#">nav ul li a</a></li>
@@ -30,6 +41,7 @@
                         <li><a href="#">nav ul li a</a></li>
                     </ul>
                 </nav>
+-->
             </header>
         </div>
 
@@ -38,26 +50,38 @@
 
                 <article>
                     <header>
-                        <h1>article header h1</h1>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec.</p>
+                        <h1>article-01-h1</h1>
+<!-- First paragraph
+	[html]
+	article-01-h1 = Fancy title
+	article-01-p = some paragraph
+-->
                     </header>
                     <section>
-                        <h2>article section h2</h2>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor. Etiam ullamcorper lorem dapibus velit suscipit ultrices. Proin in est sed erat facilisis pharetra.</p>
+                        <h2>article-02-h2</h2>
+<!--
+	[html]
+	article-02-h2 = Second fancy title
+	article-02-p = content for paragraph
+-->
                     </section>
-                    <section>
-                        <h2>article section h2</h2>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor. Etiam ullamcorper lorem dapibus velit suscipit ultrices. Proin in est sed erat facilisis pharetra.</p>
-                    </section>
+<!--
+	Do we want to support this?
                     <footer>
                         <h3>article footer h3</h3>
-                        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor.</p>
+                        <p>some p</p>
                     </footer>
+-->
                 </article>
 
                 <aside>
                     <h3>aside</h3>
-                    <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam sodales urna non odio egestas tempor. Nunc vel vehicula ante. Etiam bibendum iaculis libero, eget molestie nisl pharetra in. In semper consequat est, eu porta velit mollis nec. Curabitur posuere enim eget turpis feugiat tempor. Etiam ullamcorper lorem dapibus velit suscipit ultrices.</p>
+<!--
+	[html]
+	aside-title = some fancy title
+	aside-p = some paragraph
+                    <p>some p</p>
+-->
                 </aside>
 
             </div> <!-- #main -->
@@ -74,6 +98,9 @@
 
         <script src="js/main.js"></script>
 
+<!--
+	XXX: add support for google analytics
+-->
         <script>
             var _gaq=[['_setAccount','UA-XXXXX-X'],['_trackPageview']];
             (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
