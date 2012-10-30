@@ -40,17 +40,79 @@ class index_parser(HTMLParser):
 
 		HTMLParser.__init__(self)
 
-		self.config = ConfigParser.SafeConfigParser({'rel_html_proj': 'linux', 'rel_html_url_stable': 'kernel.org'})
+		self.config = ConfigParser.SafeConfigParser()
 		self.config.read('rel-html.cfg')
 
 		self.rel_html_proj = self.config.get("project", "rel_html_proj")
-		self.rel_html_stable = self.config.get("project", "rel_html_stable")
-		self.rel_html_stable_short = self.rel_html_stable.replace('v', '')
-		self.rel_html_next = self.config.get("project", "rel_html_next")
-		self.rel_html_url_stable = self.config.get("project", "rel_html_url_stable") + '/' + self.rel_html_stable
-		self.rel_html_url_next = self.config.get("project", "rel_html_url_next")
-		self.rel_license = self.config.get("project", "rel_license")
+		stable_vers = self.config.get("project", "rel_html_stable_vers").split("|")
 
+		self.rel_html_release_urls = []
+
+		#self.rel_html_url_stable = self.config.get("project", "rel_html_url_stable")
+		urls = self.config.get("project", "rel_html_url_releases").split()
+
+		for url in urls:
+			self.rel_html_release_urls.append(url.strip())
+
+		self.rel_html_rels = []
+
+		ver_testing = self.config.get("project", "rel_html_testing_ver")
+		rel_name_testing = self.rel_html_proj + '-' + ver_testing
+		tar_testing = rel_name_testing + ".tar.bz2"
+		s_tarball_testing = rel_name_testing + ".tar.sign"
+		tmp_changelog_testing = 'ChangeLog-' + ver_testing
+		tmp_changelog_signed_testing = 'ChangeLog-' + ver_testing + ".sign"
+
+		rel_testing = dict(version=self.config.get("project", "rel_html_testing_ver"),
+				   rel=rel_name_testing,
+				   url='',
+				   maintained = True,
+				   tarball = tar_testing,
+				   tarball_exists = False,
+				   signed_tarball = s_tarball_testing,
+				   signed_tarball_exists = False,
+				   changelog = tmp_changelog_testing,
+				   changelog_url = '',
+				   changelog_exists = False,
+				   changelog_required = False,
+				   signed_changelog = tmp_changelog_signed_testing,
+				   signed_changelog_exists = False,
+				   verified = False)
+
+		self.rel_html_rels.append(rel_testing)
+
+		for ver in stable_vers:
+			maint = True
+			if "EOL" in ver:
+				maint = False
+			ver = ver.strip(":EOL")
+			rel_name = self.rel_html_proj + '-' + ver
+			tar = rel_name + ".tar.bz2"
+			s_tarball = rel_name + ".tar.sign"
+			tmp_changelog = 'ChangeLog-' + ver
+			tmp_changelog_signed = 'ChangeLog-' + ver + ".sign"
+
+			# A release is only verified if the file exist,
+			# its signed, has a respective ChangeLog and
+			# the ChangeLog is signed
+			rel = dict(version=ver,
+				   rel=rel_name,
+				   url='',
+				   maintained = maint,
+				   tarball = tar,
+				   tarball_exists = False,
+				   signed_tarball = s_tarball,
+				   signed_tarball_exists = False,
+				   changelog = tmp_changelog,
+				   changelog_url = '',
+				   changelog_exists = False,
+				   changelog_required = True,
+				   signed_changelog = tmp_changelog_signed,
+				   signed_changelog_exists = False,
+				   verified = False)
+			self.rel_html_rels.append(rel)
+
+		self.rel_license = self.config.get("project", "rel_license")
 		self.html_title = self.config.get("html", "title")
 
 		self.html_nav_dict = ({ self.config.get("html", "nav_01_url"),
@@ -59,15 +121,6 @@ class index_parser(HTMLParser):
 				        self.config.get("html", "nav_02_txt") },
 				      { self.config.get("html", "nav_03_url"),
 				        self.config.get("html", "nav_03_txt") })
-
-		self.html_nav_01_url = self.config.get("html", "nav_01_url")
-		self.html_nav_01_txt = self.config.get("html", "nav_01_txt")
-
-		self.html_nav_02_url = self.config.get("html", "nav_02_url")
-		self.html_nav_02_txt = self.config.get("html", "nav_02_txt")
-
-		self.html_nav_03_url = self.config.get("html", "nav_02_url")
-		self.html_nav_03_txt = self.config.get("html", "nav_03_txt")
 
 		self.html_release_title = self.config.get("html", "release_title")
 		self.html_about_title = self.config.get("html", "about_title")
@@ -81,57 +134,50 @@ class index_parser(HTMLParser):
 
 	def handle_starttag(self, tag, attributes):
 		"Process a tags and its 'attributes'."
-		if tag != 'a': return
+		if tag != 'a': pass
 		for name, value in attributes:
-			if name != 'href': return
-			if (not value.startswith(self.rel_html_proj) and
-			    not value.startswith('ChangeLog')):
-				continue
-			if name == "href":
-				self.hyperlinks.append(value)
+			if name != 'href': pass
+			for r in self.rel_html_rels:
+				if r.get('version') in value:
+					if r.get('tarball') in value:
+						r['tarball_exists'] = True
+						r['url'] = value
+					elif r.get('signed_tarball') in value:
+						r['signed_tarball_exists'] = True
+					elif (r.get('changelog') == value):
+						r['changelog_url'] = value
+						r['changelog_exists'] = True
+					elif (r.get('signed_changelog') == value):
+						r['signed_changelog_exists'] = True
 
 	def handle_endtag(self, tag):
 		pass
 	def handle_data(self, data):
 		pass
 
-	def get_hyperlinks(self):
-		"Return the list of hyperlinks."
+	def releases_verified(self):
+		"Verify releases"
 
-		rel_target = self.rel_html_proj + '-' + self.rel_html_stable_short
-		rel_changelog = 'ChangeLog-' + self.rel_html_stable
+		all_verified = True
 
-		latest_rel_num = 0
-		rel_num = 0
+		for r in self.rel_html_rels:
+			if (not r['tarball_exists']):
+				all_verified = False
+				sys.stdout.write('%s\n' % r['version'])
+				break
+			if (not r['signed_tarball_exists']):
+				all_verified = False
+				break
+			if (r['changelog_required']):
+				if (not (r['changelog_exists'])):
+					all_verified = False
+					break
+				if (not (r['signed_changelog_exists'])):
+					all_verified = False
+					break
+			r['verified'] = True
 
-		for url in self.hyperlinks:
-			if (url.startswith(rel_target)):
-				m = re.search('(?<=' + rel_target + '-)\d+', url)
-				rel_num = m.group(0)
-				if (int(rel_num) > latest_rel_num):
-					latest_rel_num = int(rel_num)
-
-		rel_target = rel_target + '-' + str(latest_rel_num)
-		rel_changelog = rel_changelog + '-' + str(latest_rel_num)
-
-		for url in self.hyperlinks:
-			if (url.startswith(rel_target) and
-			    url.endswith('tar.bz2')):
-				self.rels.append(url)
-				continue
-
-			if (url.startswith(rel_target) and
-			    url.endswith('tar.sign')):
-				self.signed = True
-				continue
-
-			if (url.startswith(rel_changelog) and
-			    url.endswith('.sign')):
-				self.signed_changelog = True
-				continue
-
-			if (url.startswith(rel_changelog)):
-				self.changelog = url
+		return all_verified
 
 
 # Example full html output parser, this can be used to
@@ -172,6 +218,11 @@ def license_url(license):
 
 class rel_html_gen(HTMLParser):
 	"HTML 5 generator from parsed index parser content."
+	def __init__(self, parser):
+		HTMLParser.__init__(self)
+		self.parser = parser
+		self.skip_endtag = False
+		self.latest_stable = {}
 	def handle_title(self, tag, attributes):
 		sys.stdout.write('<%s>%s' % (tag, self.parser.html_title))
 	def handle_def_start(self, tag, attributes):
@@ -192,19 +243,26 @@ class rel_html_gen(HTMLParser):
 		self.skip_endtag = True
 		sys.stdout.write('%s</h1>\n' % (self.parser.html_release_title))
 		sys.stdout.write('\t\t\t<table border="1">\n')
-		sys.stdout.write('\t\t\t<tr>\n')
-		sys.stdout.write('\t\t\t<td>Release</td>\n')
-		sys.stdout.write('\t\t\t<td>ChangeLog</td>\n')
-		sys.stdout.write('\t\t\t</tr>\n')
 
-		for rel in self.parser.rels:
+		count = 0
+		for r in self.parser.rel_html_rels:
+			count+=1
+			if (not r.get('verified')):
+				continue
 
-			url_rel = self.parser.rel_html_url_stable + '/' + rel
-			url_changelog = self.parser.rel_html_url_stable + '/' + self.parser.changelog
+			if (count == 2):
+				latest_stable = r
 
 			sys.stdout.write('\t\t\t\t<tr>')
-			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (url_rel, rel))
-			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (url_changelog, self.parser.changelog))
+			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
+			if (r.get('maintained')):
+				sys.stdout.write('\t\t\t\t<td></td>\n')
+			else:
+				sys.stdout.write('\t\t\t\t<td><font color="FF0000">EOL</font></td>\n')
+			if (r.get('changelog_required')):
+				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r['changelog'], "ChangeLog"))
+			else:
+				sys.stdout.write('\t\t\t\t<td></td>\n')
 			sys.stdout.write('\t\t\t\t</tr>')
 
 		sys.stdout.write('\t\t\t</table>\n')
@@ -269,37 +327,22 @@ class rel_html_gen(HTMLParser):
 		sys.stdout.write('%s' % data)
 	def handle_comment(self, data):
 		sys.stdout.write('<!--%s-->' % data)
-	def __init__(self, parser):
-		HTMLParser.__init__(self)
-		self.parser = parser
-		self.skip_endtag = False
 
 def main():
 
 	parser = index_parser()
 
-	f = urllib.urlopen(parser.rel_html_url_stable)
-	html = f.read()
+	html = ""
+
+	for url in parser.rel_html_release_urls:
+		f = urllib.urlopen(url)
+		html = html + f.read()
 
 	parser.parse(html)
-	parser.get_hyperlinks()
-
-	if (not parser.signed):
-		print "No signed release found!"
+	
+	if (not parser.releases_verified()):
+		sys.stdout.write("Releases not verified\n")
 		sys.exit(1)
-
-	if (not parser.signed_changelog):
-		print "No signed release ChangeLog found!"
-		sys.exit(1)
-
-	if (not parser.changelog):
-		print "No ChangeLog found!"
-		sys.exit(1)
-
-	# Write HTML5 base page
-	#for rel in parser.rels:
-	#	print rel
-	#print parser.changelog
 
 	gen =  rel_html_gen(parser)
 	f = open('html/template.html', 'r')
