@@ -255,6 +255,7 @@ class rel_html_gen(HTMLParser):
 
 			sys.stdout.write('\t\t\t\t<tr>')
 			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
+			sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
 			if (r.get('maintained')):
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			else:
