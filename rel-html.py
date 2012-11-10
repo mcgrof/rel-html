@@ -66,6 +66,7 @@ class index_parser(HTMLParser):
 				   rel=rel_name_testing,
 				   url='',
 				   maintained = True,
+				   longterm = False,
 				   tarball = tar_testing,
 				   tarball_exists = False,
 				   signed_tarball = s_tarball_testing,
@@ -84,6 +85,7 @@ class index_parser(HTMLParser):
 			maint = True
 			if "EOL" in ver:
 				maint = False
+
 			ver = ver.strip(":EOL")
 			rel_name = self.rel_html_proj + '-' + ver
 			tar = rel_name + ".tar.bz2"
@@ -98,6 +100,7 @@ class index_parser(HTMLParser):
 				   rel=rel_name,
 				   url='',
 				   maintained = maint,
+				   longterm = False,
 				   tarball = tar,
 				   tarball_exists = False,
 				   signed_tarball = s_tarball,
@@ -141,6 +144,8 @@ class index_parser(HTMLParser):
 					if r.get('tarball') in value:
 						r['tarball_exists'] = True
 						r['url'] = value
+						if "longerm" in value:
+							r['longterm'] = True
 					elif r.get('signed_tarball') in value:
 						r['signed_tarball_exists'] = True
 					elif (r.get('changelog') == value):
@@ -259,6 +264,12 @@ class rel_html_gen(HTMLParser):
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			else:
 				sys.stdout.write('\t\t\t\t<td><font color="FF0000">EOL</font></td>\n')
+
+			if (not r.get('longterm')):
+				sys.stdout.write('\t\t\t\t<td></td>\n')
+			else:
+				sys.stdout.write('\t\t\t\t<td><font color="00FF00">Longterm</font></td>\n')
+
 			if (r.get('changelog_required')):
 				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r['changelog'], "ChangeLog"))
 			else:
