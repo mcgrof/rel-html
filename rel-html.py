@@ -44,7 +44,7 @@ class index_parser(HTMLParser):
 		self.config.read('rel-html.cfg')
 
 		self.rel_html_proj = self.config.get("project", "rel_html_proj")
-		stable_vers = self.config.get("project", "rel_html_stable_vers").split("|")
+		stable_vers = self.config.get("project", "rel_html_stable_vers").split()
 
 		self.rel_html_release_urls = []
 
