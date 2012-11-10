@@ -345,7 +345,7 @@ def main():
 		sys.stdout.write("Releases not verified\n")
 		sys.exit(1)
 
-	gen =  rel_html_gen(parser)
+	gen = rel_html_gen(parser)
 	f = open('html/template.html', 'r')
 	html = f.read()
 
