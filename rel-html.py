@@ -48,7 +48,6 @@ class index_parser(HTMLParser):
 
 		self.rel_html_release_urls = []
 
-		#self.rel_html_url_stable = self.config.get("project", "rel_html_url_stable")
 		urls = self.config.get("project", "rel_html_url_releases").split()
 
 		for url in urls:
