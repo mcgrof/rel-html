@@ -386,6 +386,27 @@ def main():
 	html = ""
 
 	for url in parser.rel_html_release_urls:
+		# XXX: document special rule
+		if url.endswith('stable/'):
+			testing_rel = parser.config.get("project", "rel_html_testing_ver")
+
+			m = re.match(r"v*(?P<VERSION>\w+.)" \
+				      "(?P<PATCHLEVEL>\w+.*)" \
+				      "(?P<SUBLEVEL>\w*)" \
+				      "(?P<EXTRAVERSION>[.-]\w*)" \
+				      "(?P<RELMOD>[-]\w*)", \
+				      testing_rel)
+			rel_specifics = m.groupdict()
+			version =	rel_specifics['VERSION'] + \
+					rel_specifics['PATCHLEVEL'] + \
+					rel_specifics['SUBLEVEL'] + \
+					rel_specifics['EXTRAVERSION']
+
+			url_rel = url + 'v' + version
+
+			f_rel = urllib.urlopen(url_rel)
+			html = html + f_rel.read()
+
 		f = urllib.urlopen(url)
 		html = html + f.read()
 
