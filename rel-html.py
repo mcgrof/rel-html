@@ -265,7 +265,7 @@ class rel_html_gen(HTMLParser):
 	def handle_h1_release(self, tag, attributes):
 		self.skip_endtag = True
 		sys.stdout.write('%s</h1>\n' % (self.parser.html_release_title))
-		sys.stdout.write('\t\t\t<table border="1">\n')
+		sys.stdout.write('\t\t\t<table border="0">\n')
 
 		count = 0
 		for r in self.parser.rel_html_rels:
