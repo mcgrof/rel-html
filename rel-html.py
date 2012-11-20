@@ -22,6 +22,25 @@ from HTMLParser import HTMLParser
 import urllib
 import ConfigParser
 import re, sys
+import os, getopt
+
+def rel_html_license_verbose():
+	print '-----------------------------------------------------------------------'
+	print 'Copyright (C) 2012 Luis R. Rodriguez <mcgrof@do-not-panic.com>'
+	print ''
+	print 'This program is free software: you can redistribute it and/or modify'
+	print 'it under the terms of the GNU Affero General Public License as'
+	print 'published by the Free Software Foundation, either version 3 of the'
+	print 'License, or (at your option) any later version.'
+	print ''
+	print 'This program is distributed in the hope that it will be useful,'
+	print 'but WITHOUT ANY WARRANTY; without even the implied warranty of'
+	print 'MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the'
+	print 'GNU Affero General Public License for more details.'
+	print ''
+	print 'You should have received a copy of the GNU Affero General Public License'
+	print 'along with this program.  If not, see <http://www.gnu.org/licenses/>.'
+	print '-----------------------------------------------------------------------'
 
 def rel_html_license():
 	return "AGPL"
@@ -36,12 +55,12 @@ class index_parser(HTMLParser):
 		self.feed(html)
 		self.close()
 
-	def __init__(self):
+	def __init__(self, config_file):
 
 		HTMLParser.__init__(self)
 
 		self.config = ConfigParser.SafeConfigParser()
-		self.config.read('rel-html.cfg')
+		self.config.read(config_file)
 
 		self.rel_html_proj = self.config.get("project", "rel_html_proj")
 		stable_vers = self.config.get("project", "rel_html_stable_vers").split()
@@ -339,9 +358,30 @@ class rel_html_gen(HTMLParser):
 	def handle_comment(self, data):
 		sys.stdout.write('<!--%s-->' % data)
 
-def main():
+def check_file(file_input):
+	if not os.path.isfile(file_input):
+		print 'File not found: %(file)s' % { "file": file_input }
+		usage()
 
-	parser = index_parser()
+def main():
+	config_file = ''
+	try:
+		opts, args = getopt.getopt(sys.argv[1:],"hf:")
+	except getopt.GetoptError, err:
+		print str(err)
+		usage()
+
+	for o, a in opts:
+		if o in ("-f"):
+			check_file(a)
+			config_file = a
+		elif o in ("-h", "--help"):
+			usage()
+
+	if len(config_file) == 0:
+		config_file = 'rel-html.cfg'
+
+	parser = index_parser(config_file)
 
 	html = ""
 
@@ -360,6 +400,22 @@ def main():
 	html = f.read()
 
 	gen.parse(html)
+
+def usage():
+	print ''
+	print '%(cmd)s' % { "cmd": sys.argv[0] }
+	print ''
+	print 'Provided an index URL and a few project hints page this'
+	print 'will spit out a shiny HTML 5 W3C compliant releases page.'
+	print ''
+	rel_html_license_verbose()
+	print ''
+	print 'This program can be run without arguments or with a project file passed'
+	print 'as an argument. If no arguments are given it will assume you have the'
+	print 'file rel-html.cfg present on your current directory.'
+	print ''
+	print 'Usage: %(cmd)s [ -f rel-html.cfg ]' % { "cmd": sys.argv[0] }
+	sys.exit(2)
 
 if __name__ == "__main__":
         main()
