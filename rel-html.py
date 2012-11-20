@@ -136,12 +136,12 @@ class index_parser(HTMLParser):
 		self.rel_license = self.config.get("project", "rel_license")
 		self.html_title = self.config.get("html", "title")
 
-		self.html_nav_dict = ({ self.config.get("html", "nav_01_url"),
-				        self.config.get("html", "nav_01_txt") },
-				      { self.config.get("html", "nav_02_url"),
-				        self.config.get("html", "nav_02_txt") },
-				      { self.config.get("html", "nav_03_url"),
-				        self.config.get("html", "nav_03_txt") })
+		self.html_nav_dict = ({ 'url': self.config.get("html", "nav_01_url"),
+					'txt': self.config.get("html", "nav_01_txt") },
+				      { 'url': self.config.get("html", "nav_02_url"),
+				        'txt': self.config.get("html", "nav_02_txt") },
+				      { 'url': self.config.get("html", "nav_03_url"),
+				        'txt': self.config.get("html", "nav_03_txt") })
 
 		self.html_release_title = self.config.get("html", "release_title")
 		self.html_about_title = self.config.get("html", "about_title")
@@ -258,8 +258,8 @@ class rel_html_gen(HTMLParser):
 		sys.stdout.write('%s</h1>\n' % (self.parser.html_title))
 		sys.stdout.write('\t\t<nav>\n')
 		sys.stdout.write('\t\t\t<ul>\n')
-		for txt, url in self.parser.html_nav_dict:
-			sys.stdout.write('\t\t\t\t<li><a href="%s">%s</a></li>\n' % (url, txt))
+		for nav in self.parser.html_nav_dict:
+			sys.stdout.write('\t\t\t\t<li><a href="%s">%s</a></li>\n' % (nav['url'], nav['txt']))
 		sys.stdout.write('\t\t\t</ul>\n')
 		sys.stdout.write('\t\t</nav>\n')
 	def handle_h1_release(self, tag, attributes):
