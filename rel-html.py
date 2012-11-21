@@ -151,7 +151,10 @@ class index_parser(HTMLParser):
 				        'txt': self.config.get("html", "nav_03_txt") })
 
 		self.html_release_title = self.config.get("html", "release_title")
-		self.html_release_title_next = self.config.get("html", "release_title_next")
+		if (self.config.has_option("html", "release_title_next")):
+			self.html_release_title_next = self.config.get("html", "release_title_next")
+		else:
+			self.html_release_title_next = ''
 		self.html_about_title = self.config.get("html", "about_title")
 		self.html_about = self.config.get("html", "about")
 
@@ -384,9 +387,12 @@ class rel_html_gen(HTMLParser):
 			sys.stdout.write('\t\t\t\t</tr>')
 
 		sys.stdout.write('\t\t\t</table>\n')
+
 	def handle_h1_release_next(self, tag, attributes):
 		if (self.next_rel_count <= 0):
-			pass
+			return
+		if (not len(self.next_rels)):
+			return
 		sys.stdout.write('%s</h1>\n' % (self.parser.html_release_title_next))
 		sys.stdout.write('\t\t\t<table border="0">\n')
 
