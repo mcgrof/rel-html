@@ -86,6 +86,7 @@ class index_parser(HTMLParser):
 				   url='',
 				   maintained = True,
 				   longterm = False,
+				   next_rel = False,
 				   tarball = tar_testing,
 				   tarball_exists = False,
 				   signed_tarball = s_tarball_testing,
@@ -120,6 +121,7 @@ class index_parser(HTMLParser):
 				   url='',
 				   maintained = maint,
 				   longterm = False,
+				   next_rel = False,
 				   tarball = tar,
 				   tarball_exists = False,
 				   signed_tarball = s_tarball,
@@ -133,6 +135,11 @@ class index_parser(HTMLParser):
 				   verified = False)
 			self.rel_html_rels.append(rel)
 
+		self.next_rel_day = 0
+		self.next_rel_month = 0
+		self.next_rel_url = ''
+		self.next_rel_date = ''
+
 		self.rel_license = self.config.get("project", "rel_license")
 		self.html_title = self.config.get("html", "title")
 
@@ -144,6 +151,7 @@ class index_parser(HTMLParser):
 				        'txt': self.config.get("html", "nav_03_txt") })
 
 		self.html_release_title = self.config.get("html", "release_title")
+		self.html_release_title_next = self.config.get("html", "release_title_next")
 		self.html_about_title = self.config.get("html", "about_title")
 		self.html_about = self.config.get("html", "about")
 
@@ -158,6 +166,50 @@ class index_parser(HTMLParser):
 		if tag != 'a': pass
 		for name, value in attributes:
 			if name != 'href': pass
+			if (self.next_rel_date != '' and
+			    self.next_rel_date in value and
+			    'tar.bz2' in value):
+				m = re.match(r'' + self.rel_html_proj + '+' \
+					      + '\-(?P<DATE_VERSION>' + self.next_rel_date + '+)' \
+					      + '\-*(?P<EXTRAVERSION>\d*)' \
+					      + '\-*(?P<RELMOD>\w*)',
+					      value)
+
+				rel_specifics = m.groupdict()
+
+				rel_name_next = self.rel_html_proj + '-' + rel_specifics['DATE_VERSION']
+				next_version = rel_specifics['DATE_VERSION']
+
+				if (rel_specifics['EXTRAVERSION'] != ''):
+					rel_name_next = rel_name_next + '-' + rel_specifics['EXTRAVERSION']
+					next_version = next_version + '-' + rel_specifics['EXTRAVERSION']
+
+				if (rel_specifics['RELMOD'] != ''):
+					rel_name_next = rel_name_next + '-' + rel_specifics['RELMOD']
+					next_version = next_version + '-' + rel_specifics['RELMOD']
+
+				tar_next = rel_name_next + ".tar.bz2"
+				s_tarball_next = rel_name_next + ".tar.sign"
+
+				rel_next = dict(version=next_version,
+						rel=rel_name_next,
+						url='',
+						maintained = True,
+						longterm = False,
+						next_rel = True,
+						tarball = tar_next,
+						tarball_exists = True,
+						signed_tarball = s_tarball_next,
+						signed_tarball_exists = False,
+						changelog = '',
+						changelog_url = '',
+						changelog_exists = False,
+						changelog_required = False,
+						signed_changelog = '',
+						signed_changelog_exists = False,
+						verified = False)
+				self.rel_html_rels.append(rel_next)
+
 			for r in self.rel_html_rels:
 				if r.get('version') in value:
 					if r.get('tarball') in value:
@@ -202,6 +254,34 @@ class index_parser(HTMLParser):
 
 		return all_verified
 
+class largest_num_href_parser(HTMLParser):
+	"Will take an index page and return the highest numbered link"
+	def parse(self, html):
+		"Parse the given string 's'."
+		self.feed(html)
+		self.close()
+		return self.number
+	def handle_decl(self, decl):
+		pass
+	def handle_starttag(self, tag, attributes):
+		"Process a tags and its 'attributes'."
+		if tag != 'a': pass
+		for name, value in attributes:
+			if name != 'href': pass
+			if (re.match(r'\d+', value)):
+				number = re.sub(r'\D', "", value)
+				if (number > self.number):
+					self.number = number
+
+	def handle_endtag(self, tag):
+		pass
+	def handle_data(self, data):
+		pass
+	def handle_comment(self, data):
+		pass
+	def __init__(self):
+		HTMLParser.__init__(self)
+		self.number = 0
 
 # Example full html output parser, this can be used to
 # simply read and output a full HTML file, you can modify
@@ -246,6 +326,8 @@ class rel_html_gen(HTMLParser):
 		self.parser = parser
 		self.skip_endtag = False
 		self.latest_stable = {}
+		self.next_rels = []
+		self.next_rel_count = 0
 	def handle_title(self, tag, attributes):
 		sys.stdout.write('<%s>%s' % (tag, self.parser.html_title))
 	def handle_def_start(self, tag, attributes):
@@ -268,6 +350,7 @@ class rel_html_gen(HTMLParser):
 		sys.stdout.write('\t\t\t<table border="0">\n')
 
 		count = 0
+
 		for r in self.parser.rel_html_rels:
 			count+=1
 			if (not r.get('verified')):
@@ -275,6 +358,41 @@ class rel_html_gen(HTMLParser):
 
 			if (count == 2):
 				latest_stable = r
+
+			if (r.get('next_rel')):
+				self.next_rels.append(r)
+				self.next_rel_count = self.next_rel_count + 1
+				continue
+
+			sys.stdout.write('\t\t\t\t<tr>')
+			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
+			sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
+			if (r.get('maintained')):
+				sys.stdout.write('\t\t\t\t<td></td>\n')
+			else:
+				sys.stdout.write('\t\t\t\t<td><font color="FF0000">EOL</font></td>\n')
+
+			if (not r.get('longterm')):
+				sys.stdout.write('\t\t\t\t<td></td>\n')
+			else:
+				sys.stdout.write('\t\t\t\t<td><font color="00FF00">Longterm</font></td>\n')
+
+			if (r.get('changelog_required')):
+				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r['changelog'], "ChangeLog"))
+			else:
+				sys.stdout.write('\t\t\t\t<td></td>\n')
+			sys.stdout.write('\t\t\t\t</tr>')
+
+		sys.stdout.write('\t\t\t</table>\n')
+	def handle_h1_release_next(self, tag, attributes):
+		if (self.next_rel_count <= 0):
+			pass
+		sys.stdout.write('%s</h1>\n' % (self.parser.html_release_title_next))
+		sys.stdout.write('\t\t\t<table border="0">\n')
+
+		for r in self.next_rels:
+			if (not r.get('verified')):
+				continue
 
 			sys.stdout.write('\t\t\t\t<tr>')
 			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
@@ -322,6 +440,8 @@ class rel_html_gen(HTMLParser):
 					def_run = self.handle_h1_top
 				elif (value == 'release_title'):
 					def_run = self.handle_h1_release
+				elif (value == 'release_title_next'):
+					def_run = self.handle_h1_release_next
 				elif (value == 'about'):
 					def_run = self.handle_h1_about
 				elif (value == 'license'):
@@ -363,6 +483,24 @@ def check_file(file_input):
 		print 'File not found: %(file)s' % { "file": file_input }
 		usage()
 
+def __get_next_rel_page(url):
+	r = urllib.urlopen(url)
+	html = r.read()
+	num_parser = largest_num_href_parser()
+	return num_parser.parse(html)
+
+def get_next_rel_url(parser, url):
+	parser.next_rel_month = __get_next_rel_page(url)
+	parser.next_rel_day   = __get_next_rel_page(url + parser.next_rel_month)
+	parser.next_rel_url   = url + parser.next_rel_month + '/' + parser.next_rel_day
+	parser.next_rel_date  = '2012' + '-' + parser.next_rel_month + '-' + parser.next_rel_day
+	return parser.next_rel_url
+
+def get_next_rel_html(parser, url):
+	url = get_next_rel_url(parser, url)
+	r = urllib.urlopen(url)
+	return r.read()
+
 def main():
 	config_file = ''
 	try:
@@ -386,7 +524,6 @@ def main():
 	html = ""
 
 	for url in parser.rel_html_release_urls:
-		# XXX: document special rule
 		if url.endswith('stable/'):
 			testing_rel = parser.config.get("project", "rel_html_testing_ver")
 
@@ -407,8 +544,11 @@ def main():
 			f_rel = urllib.urlopen(url_rel)
 			html = html + f_rel.read()
 
-		f = urllib.urlopen(url)
-		html = html + f.read()
+		elif url.endswith('2012/'):
+			html = html + get_next_rel_html(parser, url)
+		else:
+			f = urllib.urlopen(url)
+			html = html + f.read()
 
 	parser.parse(html)
 	
