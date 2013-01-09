@@ -1,7 +1,7 @@
-rel-html: Provided an index URL and a few project hints page this
+rel-html: Provided index URLs and a few project hints this
 will spit out a shiny HTML 5 W3C compliant releases page.
 
-Copyright (C) 2012 Luis R. Rodriguez <mcgrof@do-not-panic.com>
+Copyright (C) 2012-2013 Luis R. Rodriguez <mcgrof@do-not-panic.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published by

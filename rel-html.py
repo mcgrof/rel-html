@@ -3,7 +3,7 @@
 # Provided an index URL and a few project hints page this
 # will spit out a shiny HTML 5 W3C compliant releases page.
 
-# Copyright (C) 2012 Luis R. Rodriguez <mcgrof@do-not-panic.com>
+# Copyright (C) 2012-2013 Luis R. Rodriguez <mcgrof@do-not-panic.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -26,7 +26,7 @@ import os, getopt
 
 def rel_html_license_verbose():
 	print '-----------------------------------------------------------------------'
-	print 'Copyright (C) 2012 Luis R. Rodriguez <mcgrof@do-not-panic.com>'
+	print 'Copyright (C) 2012-2013 Luis R. Rodriguez <mcgrof@do-not-panic.com>'
 	print ''
 	print 'This program is free software: you can redistribute it and/or modify'
 	print 'it under the terms of the GNU Affero General Public License as'
