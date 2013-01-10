@@ -503,7 +503,7 @@ def get_next_rel_url(parser, url):
 	parser.next_rel_month = __get_next_rel_page(url)
 	parser.next_rel_day   = __get_next_rel_page(url + parser.next_rel_month)
 	parser.next_rel_url   = url + parser.next_rel_month + '/' + parser.next_rel_day
-	parser.next_rel_date  = '2012' + '-' + parser.next_rel_month + '-' + parser.next_rel_day
+	parser.next_rel_date  = '2013' + '-' + parser.next_rel_month + '-' + parser.next_rel_day
 	return parser.next_rel_url
 
 def get_next_rel_html(parser, url):
@@ -556,7 +556,7 @@ def main():
 			for r in parser.rel_html_rels:
 				html = html + read_rel_html(r.get('version'), url)
 
-		elif url.endswith('2012/'):
+		elif url.endswith('2013/'):
 			html = html + get_next_rel_html(parser, url)
 		else:
 			f = urllib.urlopen(url)
