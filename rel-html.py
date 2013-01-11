@@ -84,14 +84,17 @@ class index_parser(HTMLParser):
 		else:
 			self.ignore_changelogs = False
 
-		ver_testing = self.config.get("project", "rel_html_testing_ver")
+		if (self.config.has_option("project", "rel_html_testing_ver")):
+			ver_testing = self.config.get("project", "rel_html_testing_ver")
+		else:
+			ver_testing = ""
 		rel_name_testing = self.rel_html_proj + '-' + ver_testing
 		tar_testing = rel_name_testing + ".tar.bz2"
 		s_tarball_testing = rel_name_testing + ".tar.sign"
 		tmp_changelog_testing = 'ChangeLog-' + ver_testing
 		tmp_changelog_signed_testing = 'ChangeLog-' + ver_testing + ".sign"
 
-		rel_testing = dict(version=self.config.get("project", "rel_html_testing_ver"),
+		rel_testing = dict(version=ver_testing,
 				   rel=rel_name_testing,
 				   url='',
 				   maintained = True,
@@ -110,7 +113,8 @@ class index_parser(HTMLParser):
 				   signed_changelog_exists = False,
 				   verified = False)
 
-		self.rel_html_rels.append(rel_testing)
+		if (ver_testing != ""):
+			self.rel_html_rels.append(rel_testing)
 
 		for ver in stable_vers:
 			maint = True
