@@ -234,7 +234,7 @@ class index_parser(HTMLParser):
 			for r in self.rel_html_rels:
 				if (self.next_rel_date != '' and
 				    self.next_rel_date not in value and
-				    'tar.bz2.sign' not in value and
+				    'tar.sign' not in value and
 				    'tar.bz2' in value and
 				    r.get('version') in value):
 					m = re.match(r'' + self.rel_html_proj + '-+' \
