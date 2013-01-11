@@ -23,6 +23,7 @@ import urllib
 import ConfigParser
 import re, sys
 import os, getopt
+from operator import itemgetter
 
 def rel_html_license_verbose():
 	print '-----------------------------------------------------------------------'
@@ -212,6 +213,50 @@ class index_parser(HTMLParser):
 						signed_changelog_exists = False,
 						verified = False)
 				self.rel_html_rels.append(rel_next)
+
+			# Stable release mods
+			for r in self.rel_html_rels:
+				if (self.next_rel_date != '' and
+				    self.next_rel_date not in value and
+				    'tar.bz2.sign' not in value and
+				    'tar.bz2' in value and
+				    r.get('version') in value):
+					m = re.match(r'' + self.rel_html_proj + '-+' \
+						      "v*(?P<VERSION>\w+.)" \
+						      "(?P<PATCHLEVEL>\w+.*)" \
+						      "(?P<SUBLEVEL>\w*)" \
+						      "(?P<EXTRAVERSION>[.-]\w*)" \
+						      "(?P<RELMOD>[-][usnpc]+)", \
+						      value)
+					if not m:
+						continue
+					rel_specifics = m.groupdict()
+
+					rel_mod = rel_specifics['RELMOD']
+					if (rel_mod == ''):
+						continue
+					rel_name = r.get('rel') + rel_mod
+
+					rel_s = dict(version=r.get('version') + rel_mod,
+						     rel=rel_name,
+						     url='',
+						     maintained = True,
+						     longterm = False,
+						     next_rel = False,
+						     tarball = rel_name + '.tar.bz2',
+						     tarball_exists = True,
+						     signed_tarball = rel_name + '.tar.sign',
+						     signed_tarball_exists = False,
+						     changelog = '',
+						     changelog_url = '',
+						     changelog_exists = False,
+						     changelog_required = False,
+						     signed_changelog = '',
+						     signed_changelog_exists = False,
+						     verified = False)
+					idx = map(itemgetter('version'), self.rel_html_rels).index(r.get('version'))
+					self.rel_html_rels.insert(idx+1, rel_s)
+					break
 
 			for r in self.rel_html_rels:
 				# sys.stdout.write('%s<br>\n' % value)
