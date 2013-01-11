@@ -242,11 +242,11 @@ class index_parser(HTMLParser):
 		for r in self.rel_html_rels:
 			if (not r['tarball_exists']):
 				all_verified = False
-				sys.stdout.write('No tarball: %s<br>\n' % r['version'])
+				sys.stdout.write('No tarball: %s<br>\n' % r['tarball'])
 				break
 			if (not r['signed_tarball_exists']):
 				all_verified = False
-				sys.stdout.write('No signed tarball: %s<br>\n' % r['version'])
+				sys.stdout.write('No signed tarball: %s<br>\n' % r['signed_tarball'])
 				break
 			if (r['changelog_required']):
 				if (not (r['changelog_exists'])):
