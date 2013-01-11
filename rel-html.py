@@ -19,7 +19,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from HTMLParser import HTMLParser
-import urllib
+import urllib2
 import ConfigParser
 import re, sys
 import os, getopt
@@ -567,7 +567,7 @@ def check_file(file_input):
 		usage()
 
 def __get_next_rel_page(url):
-	r = urllib.urlopen(url)
+	r = urllib2.urlopen(url)
 	html = r.read()
 	num_parser = largest_num_href_parser()
 	return num_parser.parse(html)
@@ -581,7 +581,7 @@ def get_next_rel_url(parser, url):
 
 def get_next_rel_html(parser, url):
 	url = get_next_rel_url(parser, url)
-	r = urllib.urlopen(url)
+	r = urllib2.urlopen(url)
 	return r.read()
 
 def read_rel_html(ver, url):
@@ -599,7 +599,7 @@ def read_rel_html(ver, url):
 
 	url_rel = url + 'v' + version
 
-	f_rel = urllib.urlopen(url_rel)
+	f_rel = urllib2.urlopen(url_rel)
 	return f_rel.read()
 
 def main():
@@ -632,7 +632,7 @@ def main():
 		elif url.endswith('2013/'):
 			html = html + get_next_rel_html(parser, url)
 		else:
-			f = urllib.urlopen(url)
+			f = urllib2.urlopen(url)
 			html = html + f.read()
 
 	parser.parse(html)
