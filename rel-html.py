@@ -51,8 +51,9 @@ def rel_html_href():
 
 class index_parser(HTMLParser):
 	"HTML index parser for software releases class."
-	def parse(self, html):
+	def parse(self, html, url):
 		"Parse the given string 's'."
+		self.base_url = url + '/'
 		self.feed(html)
 		self.close()
 
@@ -100,6 +101,7 @@ class index_parser(HTMLParser):
 
 		rel_testing = dict(version=ver_testing,
 				   rel=rel_name_testing,
+				   base_url='',
 				   url='',
 				   maintained = True,
 				   longterm = False,
@@ -284,7 +286,8 @@ class index_parser(HTMLParser):
 				if r.get('version') in value:
 					if r.get('tarball') in value:
 						r['tarball_exists'] = True
-						r['url'] = value
+						r['url'] = self.base_url + value
+						r['base_url'] = self.base_url
 						if "longerm" in value:
 							r['longterm'] = True
 					elif r.get('signed_tarball') in value:
@@ -441,7 +444,8 @@ class rel_html_gen(HTMLParser):
 			sys.stdout.write('\t\t\t\t<tr>')
 			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
 			if (not r.get('ignore_signature')):
-				sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
+				sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % \
+						 (r.get('base_url') + r.get('signed_tarball')))
 			else:
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			if (r.get('maintained')):
@@ -455,7 +459,8 @@ class rel_html_gen(HTMLParser):
 				sys.stdout.write('\t\t\t\t<td><font color="00FF00">Longterm</font></td>\n')
 
 			if (r.get('changelog_required')):
-				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r['changelog'], "ChangeLog"))
+				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % \
+						 (r.get('base_url') + r.get('changelog'), "ChangeLog"))
 			else:
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			sys.stdout.write('\t\t\t\t</tr>')
@@ -477,7 +482,8 @@ class rel_html_gen(HTMLParser):
 			sys.stdout.write('\t\t\t\t<tr>')
 			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
 			if (not r.get('ignore_signature')):
-				sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
+				sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % \
+						 (r.get('base_url') + r.get('signed_tarball')))
 			else:
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			if (r.get('maintained')):
@@ -491,7 +497,8 @@ class rel_html_gen(HTMLParser):
 				sys.stdout.write('\t\t\t\t<td><font color="00FF00">Longterm</font></td>\n')
 
 			if (r.get('changelog_required')):
-				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r['changelog'], "ChangeLog"))
+				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % \
+						 (r.get('base_url') + r.get('changelog'), "ChangeLog"))
 			else:
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			sys.stdout.write('\t\t\t\t</tr>')
@@ -582,9 +589,10 @@ def get_next_rel_url(parser, url):
 def get_next_rel_html(parser, url):
 	url = get_next_rel_url(parser, url)
 	r = urllib2.urlopen(url)
-	return r.read()
+	html = r.read()
+	parser.parse(html, url)
 
-def read_rel_html(ver, url):
+def read_rel_html(parser, ver, url):
 	m = re.match(r"v*(?P<VERSION>\w+.)" \
 		      "(?P<PATCHLEVEL>\w+.*)" \
 		      "(?P<SUBLEVEL>\w*)" \
@@ -600,7 +608,8 @@ def read_rel_html(ver, url):
 	url_rel = url + 'v' + version
 
 	f_rel = urllib2.urlopen(url_rel)
-	return f_rel.read()
+	html = f_rel.read()
+	parser.parse(html, url_rel)
 
 def main():
 	config_file = ''
@@ -627,16 +636,15 @@ def main():
 	for url in parser.rel_html_release_urls:
 		if url.endswith('stable/'):
 			for r in parser.rel_html_rels:
-				html = html + read_rel_html(r.get('version'), url)
+				read_rel_html(parser, r.get('version'), url)
 
 		elif url.endswith('2013/'):
-			html = html + get_next_rel_html(parser, url)
+			get_next_rel_html(parser, url)
 		else:
 			f = urllib2.urlopen(url)
-			html = html + f.read()
+			html = f.read()
+			parser.parse(html, url)
 
-	parser.parse(html)
-	
 	if (not parser.releases_verified()):
 		sys.stdout.write("Releases not verified\n")
 		sys.exit(1)
