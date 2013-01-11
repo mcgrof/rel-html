@@ -75,6 +75,15 @@ class index_parser(HTMLParser):
 
 		self.rel_html_rels = []
 
+		if (self.config.has_option("project", "ignore_signatures")):
+			self.ignore_signatures = self.config.get("project", "ignore_signatures")
+		else:
+			self.ignore_signatures = False
+		if (self.config.has_option("project", "ignore_changelogs")):
+			self.ignore_changelogs = self.config.get("project", "ignore_changelogs")
+		else:
+			self.ignore_changelogs = False
+
 		ver_testing = self.config.get("project", "rel_html_testing_ver")
 		rel_name_testing = self.rel_html_proj + '-' + ver_testing
 		tar_testing = rel_name_testing + ".tar.bz2"
@@ -90,6 +99,7 @@ class index_parser(HTMLParser):
 				   next_rel = False,
 				   tarball = tar_testing,
 				   tarball_exists = False,
+				   ignore_signature = self.ignore_signatures,
 				   signed_tarball = s_tarball_testing,
 				   signed_tarball_exists = False,
 				   changelog = tmp_changelog_testing,
@@ -125,12 +135,13 @@ class index_parser(HTMLParser):
 				   next_rel = False,
 				   tarball = tar,
 				   tarball_exists = False,
+				   ignore_signature = self.ignore_signatures,
 				   signed_tarball = s_tarball,
 				   signed_tarball_exists = False,
 				   changelog = tmp_changelog,
 				   changelog_url = '',
 				   changelog_exists = False,
-				   changelog_required = True,
+				   changelog_required = not self.ignore_changelogs,
 				   signed_changelog = tmp_changelog_signed,
 				   signed_changelog_exists = False,
 				   verified = False)
@@ -203,6 +214,7 @@ class index_parser(HTMLParser):
 						next_rel = True,
 						tarball = tar_next,
 						tarball_exists = True,
+				   		ignore_signature = self.ignore_signatures,
 						signed_tarball = s_tarball_next,
 						signed_tarball_exists = False,
 						changelog = '',
@@ -245,6 +257,7 @@ class index_parser(HTMLParser):
 						     next_rel = False,
 						     tarball = rel_name + '.tar.bz2',
 						     tarball_exists = True,
+				   		     ignore_signature = self.ignore_signatures,
 						     signed_tarball = rel_name + '.tar.sign',
 						     signed_tarball_exists = False,
 						     changelog = '',
@@ -289,10 +302,11 @@ class index_parser(HTMLParser):
 				all_verified = False
 				sys.stdout.write('No tarball: %s<br>\n' % r['tarball'])
 				break
-			if (not r['signed_tarball_exists']):
-				all_verified = False
-				sys.stdout.write('No signed tarball: %s<br>\n' % r['signed_tarball'])
-				break
+			if (not r['ignore_signature']):
+				if (not r['signed_tarball_exists']):
+					all_verified = False
+					sys.stdout.write('No signed tarball: %s<br>\n' % r['signed_tarball'])
+					break
 			if (r['changelog_required']):
 				if (not (r['changelog_exists'])):
 					all_verified = False
@@ -418,7 +432,10 @@ class rel_html_gen(HTMLParser):
 
 			sys.stdout.write('\t\t\t\t<tr>')
 			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
-			sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
+			if (not r.get('ignore_signature')):
+				sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
+			else:
+				sys.stdout.write('\t\t\t\t<td></td>\n')
 			if (r.get('maintained')):
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			else:
@@ -451,7 +468,10 @@ class rel_html_gen(HTMLParser):
 
 			sys.stdout.write('\t\t\t\t<tr>')
 			sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % (r.get('url'), r.get('rel')))
-			sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
+			if (not r.get('ignore_signature')):
+				sys.stdout.write('\t\t\t\t<td><a href="%s">signed</a></td>\n' % (r.get('signed_tarball')))
+			else:
+				sys.stdout.write('\t\t\t\t<td></td>\n')
 			if (r.get('maintained')):
 				sys.stdout.write('\t\t\t\t<td></td>\n')
 			else:
