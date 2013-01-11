@@ -83,13 +83,17 @@ class index_parser(HTMLParser):
 			self.ignore_changelogs = self.config.get("project", "ignore_changelogs")
 		else:
 			self.ignore_changelogs = False
+		if (self.config.has_option("project", "release_extension")):
+			self.release_extension = "." + self.config.get("project", "release_extension")
+		else:
+			self.release_extension = ".tar.bz2"
 
 		if (self.config.has_option("project", "rel_html_testing_ver")):
 			ver_testing = self.config.get("project", "rel_html_testing_ver")
 		else:
 			ver_testing = ""
 		rel_name_testing = self.rel_html_proj + '-' + ver_testing
-		tar_testing = rel_name_testing + ".tar.bz2"
+		tar_testing = rel_name_testing + self.release_extension
 		s_tarball_testing = rel_name_testing + ".tar.sign"
 		tmp_changelog_testing = 'ChangeLog-' + ver_testing
 		tmp_changelog_signed_testing = 'ChangeLog-' + ver_testing + ".sign"
@@ -123,7 +127,7 @@ class index_parser(HTMLParser):
 
 			ver = ver.strip(":EOL")
 			rel_name = self.rel_html_proj + '-' + ver
-			tar = rel_name + ".tar.bz2"
+			tar = rel_name + self.release_extension
 			s_tarball = rel_name + ".tar.sign"
 			tmp_changelog = 'ChangeLog-' + ver
 			tmp_changelog_signed = 'ChangeLog-' + ver + ".sign"
@@ -187,7 +191,7 @@ class index_parser(HTMLParser):
 			if name != 'href': pass
 			if (self.next_rel_date != '' and
 			    self.next_rel_date in value and
-			    'tar.bz2' in value):
+			    self.release_extension in value):
 				m = re.match(r'' + self.rel_html_proj + '+' \
 					      + '\-(?P<DATE_VERSION>' + self.next_rel_date + '+)' \
 					      + '\-*(?P<EXTRAVERSION>\d*)' \
@@ -207,7 +211,7 @@ class index_parser(HTMLParser):
 					rel_name_next = rel_name_next + '-' + rel_specifics['RELMOD']
 					next_version = next_version + '-' + rel_specifics['RELMOD']
 
-				tar_next = rel_name_next + ".tar.bz2"
+				tar_next = rel_name_next + self.release_extension
 				s_tarball_next = rel_name_next + ".tar.sign"
 
 				rel_next = dict(version=next_version,
@@ -235,7 +239,7 @@ class index_parser(HTMLParser):
 				if (self.next_rel_date != '' and
 				    self.next_rel_date not in value and
 				    'tar.sign' not in value and
-				    'tar.bz2' in value and
+				    self.release_extension in value and
 				    r.get('version') in value):
 					m = re.match(r'' + self.rel_html_proj + '-+' \
 						      "v*(?P<VERSION>\w+.)" \
@@ -259,7 +263,7 @@ class index_parser(HTMLParser):
 						     maintained = True,
 						     longterm = False,
 						     next_rel = False,
-						     tarball = rel_name + '.tar.bz2',
+						     tarball = rel_name + self.release_extension,
 						     tarball_exists = True,
 				   		     ignore_signature = self.ignore_signatures,
 						     signed_tarball = rel_name + '.tar.sign',
