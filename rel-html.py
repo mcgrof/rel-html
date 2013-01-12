@@ -67,6 +67,7 @@ class index_parser(HTMLParser):
 		self.rel_html_proj = self.config.get("project", "rel_html_proj")
 		stable_vers = self.config.get("project", "rel_html_stable_vers").split()
 
+		self.modsearch = ''
 		self.rel_html_release_urls = []
 
 		urls = self.config.get("project", "rel_html_url_releases").split()
@@ -186,6 +187,87 @@ class index_parser(HTMLParser):
 		self.changelog = ''
 		self.signed_changelog = False
 
+	def add_next_release(self, value):
+		m = re.match(r'' + self.rel_html_proj + '+' \
+			      + '\-(?P<DATE_VERSION>' + self.next_rel_date + '+)' \
+			      + '\-*(?P<EXTRAVERSION>\d*)' \
+			      + '\-*(?P<RELMOD>\w*)',
+			      value)
+
+		rel_specifics = m.groupdict()
+
+		rel_name_next = self.rel_html_proj + '-' + rel_specifics['DATE_VERSION']
+		next_version = rel_specifics['DATE_VERSION']
+
+		if (rel_specifics['EXTRAVERSION'] != ''):
+			rel_name_next = rel_name_next + '-' + rel_specifics['EXTRAVERSION']
+			next_version = next_version + '-' + rel_specifics['EXTRAVERSION']
+
+		if (rel_specifics['RELMOD'] != ''):
+			rel_name_next = rel_name_next + '-' + rel_specifics['RELMOD']
+			next_version = next_version + '-' + rel_specifics['RELMOD']
+
+		tar_next = rel_name_next + self.release_extension
+		s_tarball_next = rel_name_next + ".tar.sign"
+
+		rel_next = dict(version=next_version,
+				rel=rel_name_next,
+				url='',
+				maintained = True,
+				longterm = False,
+				next_rel = True,
+				tarball = tar_next,
+				tarball_exists = True,
+				ignore_signature = self.ignore_signatures,
+				signed_tarball = s_tarball_next,
+				signed_tarball_exists = False,
+				changelog = '',
+				changelog_url = '',
+				changelog_exists = False,
+				changelog_required = False,
+				signed_changelog = '',
+				signed_changelog_exists = False,
+				verified = False)
+		self.rel_html_rels.append(rel_next)
+
+	def add_mod_release(self, value):
+			m = re.match(r'' + self.rel_html_proj + '-+' \
+				      "v*(?P<VERSION>\w+.)" \
+				      "(?P<PATCHLEVEL>\w+.*)" \
+				      "(?P<SUBLEVEL>\w*)" \
+				      "(?P<EXTRAVERSION>[.-]\w*)" \
+				      "(?P<RELMOD>[-][usnpc]+)", \
+				      value)
+			if not m:
+				return
+			rel_specifics = m.groupdict()
+
+			rel_mod = rel_specifics['RELMOD']
+			if (rel_mod == ''):
+				return
+			rel_name = self.rel_html_proj + '-' + self.modsearch + rel_mod
+
+			rel_s = dict(version=self.modsearch + rel_mod,
+				     rel=rel_name,
+				     url='',
+				     maintained = True,
+				     longterm = False,
+				     next_rel = False,
+				     tarball = value,
+				     tarball_exists = True,
+				     ignore_signature = self.ignore_signatures,
+				     signed_tarball = rel_name + '.tar.sign',
+				     signed_tarball_exists = False,
+				     changelog = '',
+				     changelog_url = '',
+				     changelog_exists = False,
+				     changelog_required = False,
+				     signed_changelog = '',
+				     signed_changelog_exists = False,
+				     verified = False)
+			idx = map(itemgetter('version'), self.rel_html_rels).index(self.modsearch)
+			self.rel_html_rels.insert(idx+1, rel_s)
+
 	def handle_starttag(self, tag, attributes):
 		"Process a tags and its 'attributes'."
 		if tag != 'a': pass
@@ -194,92 +276,14 @@ class index_parser(HTMLParser):
 			if (self.next_rel_date != '' and
 			    self.next_rel_date in value and
 			    self.release_extension in value):
-				m = re.match(r'' + self.rel_html_proj + '+' \
-					      + '\-(?P<DATE_VERSION>' + self.next_rel_date + '+)' \
-					      + '\-*(?P<EXTRAVERSION>\d*)' \
-					      + '\-*(?P<RELMOD>\w*)',
-					      value)
-
-				rel_specifics = m.groupdict()
-
-				rel_name_next = self.rel_html_proj + '-' + rel_specifics['DATE_VERSION']
-				next_version = rel_specifics['DATE_VERSION']
-
-				if (rel_specifics['EXTRAVERSION'] != ''):
-					rel_name_next = rel_name_next + '-' + rel_specifics['EXTRAVERSION']
-					next_version = next_version + '-' + rel_specifics['EXTRAVERSION']
-
-				if (rel_specifics['RELMOD'] != ''):
-					rel_name_next = rel_name_next + '-' + rel_specifics['RELMOD']
-					next_version = next_version + '-' + rel_specifics['RELMOD']
-
-				tar_next = rel_name_next + self.release_extension
-				s_tarball_next = rel_name_next + ".tar.sign"
-
-				rel_next = dict(version=next_version,
-						rel=rel_name_next,
-						url='',
-						maintained = True,
-						longterm = False,
-						next_rel = True,
-						tarball = tar_next,
-						tarball_exists = True,
-				   		ignore_signature = self.ignore_signatures,
-						signed_tarball = s_tarball_next,
-						signed_tarball_exists = False,
-						changelog = '',
-						changelog_url = '',
-						changelog_exists = False,
-						changelog_required = False,
-						signed_changelog = '',
-						signed_changelog_exists = False,
-						verified = False)
-				self.rel_html_rels.append(rel_next)
+				self.add_next_release(value)
 
 			# Stable release mods
-			for r in self.rel_html_rels:
-				if (self.next_rel_date != '' and
-				    self.next_rel_date not in value and
-				    'tar.sign' not in value and
-				    self.release_extension in value and
-				    r.get('version') in value):
-					m = re.match(r'' + self.rel_html_proj + '-+' \
-						      "v*(?P<VERSION>\w+.)" \
-						      "(?P<PATCHLEVEL>\w+.*)" \
-						      "(?P<SUBLEVEL>\w*)" \
-						      "(?P<EXTRAVERSION>[.-]\w*)" \
-						      "(?P<RELMOD>[-][usnpc]+)", \
-						      value)
-					if not m:
-						continue
-					rel_specifics = m.groupdict()
-
-					rel_mod = rel_specifics['RELMOD']
-					if (rel_mod == ''):
-						continue
-					rel_name = r.get('rel') + rel_mod
-
-					rel_s = dict(version=r.get('version') + rel_mod,
-						     rel=rel_name,
-						     url='',
-						     maintained = True,
-						     longterm = False,
-						     next_rel = False,
-						     tarball = rel_name + self.release_extension,
-						     tarball_exists = True,
-				   		     ignore_signature = self.ignore_signatures,
-						     signed_tarball = rel_name + '.tar.sign',
-						     signed_tarball_exists = False,
-						     changelog = '',
-						     changelog_url = '',
-						     changelog_exists = False,
-						     changelog_required = False,
-						     signed_changelog = '',
-						     signed_changelog_exists = False,
-						     verified = False)
-					idx = map(itemgetter('version'), self.rel_html_rels).index(r.get('version'))
-					self.rel_html_rels.insert(idx+1, rel_s)
-					break
+			if (self.modsearch != '' and
+			    self.modsearch in value and
+			    'tar.sign' not in value and
+			    self.release_extension in value):
+				self.add_mod_release(value)
 
 			for r in self.rel_html_rels:
 				# sys.stdout.write('%s<br>\n' % value)
@@ -599,6 +603,8 @@ def read_rel_html(parser, ver, url):
 		      "(?P<EXTRAVERSION>[.-]\w*)" \
 		      "(?P<RELMOD>[-]\w*)", \
 		      ver)
+	if (not m):
+		return
 	rel_specifics = m.groupdict()
 	version =	rel_specifics['VERSION'] + \
 			rel_specifics['PATCHLEVEL'] + \
@@ -607,9 +613,19 @@ def read_rel_html(parser, ver, url):
 
 	url_rel = url + 'v' + version
 
-	f_rel = urllib2.urlopen(url_rel)
-	html = f_rel.read()
-	parser.parse(html, url_rel)
+	extra = rel_specifics['EXTRAVERSION']
+
+	if ('rc' not in extra and
+	    '.' not in extra):
+		return
+
+	try:
+		f_rel = urllib2.urlopen(url_rel)
+		html = f_rel.read()
+		parser.modsearch = ver
+		parser.parse(html, url_rel)
+	except urllib2.HTTPError, error:
+		return
 
 def main():
 	config_file = ''
