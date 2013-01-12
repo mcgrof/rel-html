@@ -8,11 +8,11 @@ you can specify attributes for the release.
 
 # Example release page
 
-http://drvbp1.linux-foundation.org/~mcgrof/rel-html/linux/
-http://drvbp1.linux-foundation.org/~mcgrof/rel-html/compat-drivers/
-http://drvbp1.linux-foundation.org/~mcgrof/rel-html/iw/
-http://drvbp1.linux-foundation.org/~mcgrof/rel-html/crda/
-http://drvbp1.linux-foundation.org/~mcgrof/rel-html/hostapd/
+  * http://drvbp1.linux-foundation.org/~mcgrof/rel-html/linux/
+  * http://drvbp1.linux-foundation.org/~mcgrof/rel-html/compat-drivers/
+  * http://drvbp1.linux-foundation.org/~mcgrof/rel-html/iw/
+  * http://drvbp1.linux-foundation.org/~mcgrof/rel-html/crda/
+  * http://drvbp1.linux-foundation.org/~mcgrof/rel-html/hostapd/
 
 # TODO
 
