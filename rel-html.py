@@ -114,19 +114,19 @@ def __compute_rel_weight(rel_specs):
 
 def get_rel_spec(rel):
 	if ("rc" in rel):
-		m = re.match(r"v*(?P<VERSION>\w+)\.+" \
-			      "(?P<PATCHLEVEL>\w+)[.]*" \
-			      "(?P<SUBLEVEL>\w*)" \
+		m = re.match(r"v*(?P<VERSION>\d+)\.+" \
+			      "(?P<PATCHLEVEL>\d+)[.]*" \
+			      "(?P<SUBLEVEL>\d*)" \
 			      "(?P<EXTRAVERSION>[-rc]+\w*)\-*" \
-			      "(?P<RELMOD_UPDATE>\w*)[-]*" \
+			      "(?P<RELMOD_UPDATE>\d*)[-]*" \
 			      "(?P<RELMOD_TYPE>[usnpc]*)", \
 			      rel)
 	else:
-		m = re.match(r"v*(?P<VERSION>\w+)\.+" \
-			      "(?P<PATCHLEVEL>\w+)[.]*" \
-			      "(?P<SUBLEVEL>\w*)[.]*" \
+		m = re.match(r"v*(?P<VERSION>\d+)\.+" \
+			      "(?P<PATCHLEVEL>\d+)[.]*" \
+			      "(?P<SUBLEVEL>\d*)[.]*" \
 			      "(?P<EXTRAVERSION>\w*)\-*" \
-			      "(?P<RELMOD_UPDATE>\w*)[-]*" \
+			      "(?P<RELMOD_UPDATE>\d*)[-]*" \
 			      "(?P<RELMOD_TYPE>[usnpc]*)", \
 			      rel)
 	if (not m):
@@ -188,12 +188,12 @@ def compute_rel_weight_next(rel):
 		return 0
 	if (rel[4] == "-"):
 		m = re.match(r"v*(?P<DATE_VERSION>\w+-*\w*-*\w*)[-]*" \
-			      "(?P<RELMOD_UPDATE>\w*)[-]*" \
+			      "(?P<RELMOD_UPDATE>\d*)[-]*" \
 			      "(?P<RELMOD_TYPE>[usnpc]*)", \
 			      rel)
 	else:
 		m = re.match(r"v*(?P<DATE_VERSION>\w+)[-]*" \
-			      "(?P<RELMOD_UPDATE>\w*)[-]*" \
+			      "(?P<RELMOD_UPDATE>\d*)[-]*" \
 			      "(?P<RELMOD_TYPE>[usnpc]*)", \
 			      rel)
 	if (not m):
@@ -1135,6 +1135,8 @@ def try_rels(rels):
 def debug_rel_tests():
 	try_rel_next("2013-01-10-2-u")
 	try_rel_next("20130110-2-u")
+	try_rel_next("2013-03-07-u")
+	try_rel_next("2013-03-07")
 
 	rels = ["2.6.32.3",
 		"3.8",
