@@ -305,9 +305,9 @@ class index_tarball_hunter(HTMLParser):
 
 		ver = rel_name.lstrip(index_parser.rel_html_proj + '-')
 
-		p = re.compile('-[usnpc]$')
-		changelog_ver = p.sub("", ver)
-		tmp_changelog = 'ChangeLog-' + changelog_ver
+		p = re.compile('-[usnpc]*$')
+		short_ver = p.sub("", ver)
+		tmp_changelog = 'ChangeLog-' + short_ver
 		tmp_changelog_signed = tmp_changelog + ".sign"
 
 		if (index_parser.ignore_changelogs):
@@ -322,7 +322,7 @@ class index_tarball_hunter(HTMLParser):
 		if (not w):
 			return
 
-		tar = dict(version = ver,
+		tar = dict(version = short_ver,
 			   weight = w,
 			   rel=rel_name,
 			   specifics = rel_specifics,
