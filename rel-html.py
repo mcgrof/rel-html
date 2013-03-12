@@ -262,8 +262,8 @@ class index_tarball_hunter(HTMLParser):
 	def is_rel_eol(self, rel_specs):
 		index_parser = self.index_parser
 		for eol in index_parser.eol:
-			m = re.match(r"v*(?P<VERSION>\w+)\.+" \
-				      "(?P<PATCHLEVEL>\w+)[.]*" \
+			m = re.match(r"v*(?P<VERSION>\d+)\.+" \
+				      "(?P<PATCHLEVEL>\d+)[.]*" \
 				      "(?P<SUBLEVEL>\w*)[.-]*" \
 				      "(?P<EXTRAVERSION>\w*)", \
 				      eol)
@@ -284,11 +284,11 @@ class index_tarball_hunter(HTMLParser):
 			return
 
 		m = re.match(r'' + index_parser.rel_html_proj + '-+' \
-			      "v*(?P<VERSION>\w+)\.+" \
-			      "(?P<PATCHLEVEL>\w+)\.*" \
+			      "v*(?P<VERSION>\d+)\.+" \
+			      "(?P<PATCHLEVEL>\d+)\.*" \
 			      "(?P<SUBLEVEL>\w*)[.-]*" \
 			      "(?P<EXTRAVERSION>\w*)[-]*" \
-			      "(?P<RELMOD_UPDATE>\w*)[-]*" \
+			      "(?P<RELMOD_UPDATE>\d*)[-]*" \
 			      "(?P<RELMOD_TYPE>[usnpc]*)", \
 			      value)
 		if (not m):
