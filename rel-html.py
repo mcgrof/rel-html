@@ -1008,14 +1008,7 @@ class rel_html_gen(HTMLParser):
 				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % \
 						 (r.get('changelog_url'), "ChangeLog"))
 			else:
-				if (r.get('changelog_exists')):
-					if (r['signed_changelog_exists']):
-						sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % \
-								 (r.get('changelog_url'), "ChangeLog"))
-					else:
-						sys.stdout.write('\t\t\t\t<td></td>\n')
-				else:
-					sys.stdout.write('\t\t\t\t<td></td>\n')
+				sys.stdout.write('\t\t\t\t<td></td>\n')
 			sys.stdout.write('\t\t\t\t</tr>')
 
 		sys.stdout.write('\t\t\t</table>\n')
@@ -1053,14 +1046,7 @@ class rel_html_gen(HTMLParser):
 				sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % \
 						 (r.get('changelog_url'), "ChangeLog"))
 			else:
-				if (r.get('changelog_exists')):
-					if (r['signed_changelog_exists']):
-						sys.stdout.write('\t\t\t\t<td><a href="%s">%s</a></td>\n' % \
-								 (r.get('changelog_url'), "ChangeLog"))
-					else:
-						sys.stdout.write('\t\t\t\t<td></td>\n')
-				else:
-					sys.stdout.write('\t\t\t\t<td></td>\n')
+				sys.stdout.write('\t\t\t\t<td></td>\n')
 			sys.stdout.write('\t\t\t\t</tr>')
 
 		sys.stdout.write('\t\t\t</table>\n')
