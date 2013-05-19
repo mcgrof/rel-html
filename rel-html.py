@@ -408,7 +408,7 @@ class index_tarball_hunter(HTMLParser):
 		tar_next = dict(version=next_version,
 				weight = w,
 				rel = rel_name_next,
-				url = '',
+				url = self.base_url + '/' + tar_next,
 				specifics = rel_specifics,
 				base_url = self.base_url,
 				base_url_validated = False,
