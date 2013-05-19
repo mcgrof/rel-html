@@ -274,6 +274,37 @@ class index_tarball_hunter(HTMLParser):
 			    eol_specs['PATCHLEVEL'] == rel_specs['PATCHLEVEL']):
 				return True
 		return False
+	def get_rel_match(self, value):
+		index_parser = self.index_parser
+		rel_match = dict(m = None, rel_name = "")
+		for rel_name in index_parser.rel_names:
+			m = re.match(r'' + rel_name + '-+' \
+				      "v*(?P<VERSION>\d+)\.+" \
+				      "(?P<PATCHLEVEL>\d+)\.*" \
+				      "(?P<SUBLEVEL>\w*)[.-]*" \
+				      "(?P<EXTRAVERSION>\w*)[-]*" \
+				      "(?P<RELMOD_UPDATE>\d*)[-]*" \
+				      "(?P<RELMOD_TYPE>[usnpc]*)", \
+				      value)
+			if (m):
+				rel_match['m'] = m
+				rel_match['rel_name'] = rel_name
+				return rel_match
+		return rel_match
+	def get_rel_match_next(self, value):
+		index_parser = self.index_parser
+		rel_match = dict(m = None, rel_name = "")
+		for rel_name in index_parser.rel_names:
+			m = re.match(r'' + rel_name + '+' \
+				      + '\-(?P<DATE_VERSION>' + index_parser.next_rel_date + '+)' \
+				      + '\-*(?P<EXTRAVERSION>\d*)' \
+				      + '\-*(?P<RELMOD>\w*)',
+				      value)
+			if (m):
+				rel_match['m'] = m
+				rel_match['rel_name'] = rel_name
+				return rel_match
+		return rel_match
 	def update_latest_tarball_stable(self, value):
 		index_parser = self.index_parser
 		if (self.release not in value):
@@ -283,18 +314,11 @@ class index_tarball_hunter(HTMLParser):
 		if (index_parser.release_extension not in value):
 			return
 
-		m = re.match(r'' + index_parser.rel_html_proj + '-+' \
-			      "v*(?P<VERSION>\d+)\.+" \
-			      "(?P<PATCHLEVEL>\d+)\.*" \
-			      "(?P<SUBLEVEL>\w*)[.-]*" \
-			      "(?P<EXTRAVERSION>\w*)[-]*" \
-			      "(?P<RELMOD_UPDATE>\d*)[-]*" \
-			      "(?P<RELMOD_TYPE>[usnpc]*)", \
-			      value)
-		if (not m):
+		rel_match = self.get_rel_match(value)
+		if (not rel_match['m']):
 			return
 
-		rel_specifics = m.groupdict()
+		rel_specifics = rel_match['m'].groupdict()
 
 		supported = True
 		if (self.is_rel_eol(rel_specifics)):
@@ -303,7 +327,7 @@ class index_tarball_hunter(HTMLParser):
 		p = re.compile(index_parser.release_extension + '$')
 		rel_name = p.sub("", value)
 
-		ver = rel_name.lstrip(index_parser.rel_html_proj + '-')
+		ver = rel_name.lstrip(rel_match['rel_name'] + '-')
 
 		p = re.compile('-[usnpc]*$')
 		short_ver = p.sub("", ver)
@@ -348,18 +372,13 @@ class index_tarball_hunter(HTMLParser):
 		self.tarball_add_stable(tar)
 	def update_latest_tarball_next(self, value):
 		index_parser = self.index_parser
-		m = re.match(r'' + index_parser.rel_html_proj + '+' \
-			      + '\-(?P<DATE_VERSION>' + index_parser.next_rel_date + '+)' \
-			      + '\-*(?P<EXTRAVERSION>\d*)' \
-			      + '\-*(?P<RELMOD>\w*)',
-			      value)
-
-		if (not m):
+		rel_match = self.get_rel_match_next(value)
+		if (not rel_match['m']):
 			return
 
-		rel_specifics = m.groupdict()
+		rel_specifics = rel_match['m'].groupdict()
 
-		rel_name_next = index_parser.rel_html_proj + '-' + rel_specifics['DATE_VERSION']
+		rel_name_next = rel_match['rel_name'] + '-' + rel_specifics['DATE_VERSION']
 		next_version = rel_specifics['DATE_VERSION']
 
 		if (rel_specifics['EXTRAVERSION'] != ''):
@@ -451,10 +470,10 @@ class index_rel_inferrer(HTMLParser):
 		self.close()
 	def handle_decl(self, decl):
 		pass
-	def revise_inference(self, rel, value):
+	def revise_inference(self, rel, value, rel_name):
 		index_parser = self.index_parser
 
-		value = value.lstrip(index_parser.rel_html_proj + "-")
+		value = value.lstrip(rel_name + "-")
 
 		p = re.compile(index_parser.release_extension + '$')
 		value = p.sub("", value)
@@ -500,7 +519,8 @@ class index_rel_inferrer(HTMLParser):
 		if tag != 'a': return
 		for name, value in attributes:
 			if name != 'href': return
-			if (index_parser.rel_html_proj not in value):
+			rel_name = index_parser.search_rel_name(value)
+			if (not rel_name):
 				return
 			if (index_parser.release_extension not in value):
 				return
@@ -509,7 +529,7 @@ class index_rel_inferrer(HTMLParser):
 			for rel in index_parser.inferred_releases:
 				if (rel.get('base') not in value):
 					continue
-				self.revise_inference(rel, value)
+				self.revise_inference(rel, value, rel_name)
 	def handle_endtag(self, tag):
 		pass
 	def handle_data(self, data):
@@ -618,6 +638,13 @@ class index_parser(HTMLParser):
 		self.config.read(config_file)
 
 		self.rel_html_proj = self.config.get("project", "rel_html_proj")
+		if (self.config.has_option("project", "rel_html_proj_aliases")):
+			self.rel_html_proj_aliases = self.config.get("project", "rel_html_proj_aliases").split()
+		else:
+			self.rel_html_proj_aliases = list()
+
+		self.rel_names = self.rel_html_proj_aliases
+		self.rel_names.insert(0, self.rel_html_proj)
 
 		self.inferred_releases = []
 
@@ -692,6 +719,7 @@ class index_parser(HTMLParser):
 		self.changelog = ''
 		self.signed_changelog = False
 
+
 	def get_stable_ext_urls(self, url):
 		url_parser = stable_url_parser(self, url)
 		try:
@@ -701,6 +729,11 @@ class index_parser(HTMLParser):
 			self.stable_urls = url_parser.stable_urls
 		except urllib2.HTTPError, error:
 			return
+	def search_rel_name(self, value):
+		for rel_name in self.rel_names:
+			if (rel_name in value):
+				return rel_name
+		return ""
 	def search_stable_tarballs(self, ver, url):
 		try:
 			tarball_hunter = index_tarball_hunter(self, ver, url)
@@ -1133,6 +1166,7 @@ def try_rels(rels):
 	print_rels_weight(col)
 
 def debug_rel_tests():
+	try_rel_next("20130510-2-u")
 	try_rel_next("2013-01-10-2-u")
 	try_rel_next("20130110-2-u")
 	try_rel_next("2013-03-07-u")
