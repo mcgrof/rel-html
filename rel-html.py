@@ -1082,6 +1082,8 @@ def license_url(license):
         return "http://opensource.org/licenses/ISC"
     elif (license == 'AGPL'):
         return "http://www.gnu.org/licenses/agpl-3.0.html"
+    elif (license == 'copyleft-next'):
+        return "http://copyleft-next.org/"
     else:
         return "http://opensource.org/licenses/alphabetical"
 
