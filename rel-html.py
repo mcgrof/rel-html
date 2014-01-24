@@ -3,7 +3,7 @@
 # Provided an index URL and a few project hints page this
 # will spit out a shiny HTML 5 W3C compliant releases page.
 
-# Copyright (C) 2012-2013 Luis R. Rodriguez <mcgrof@do-not-panic.com>
+# Copyright (C) 2012-2014 Luis R. Rodriguez <mcgrof@do-not-panic.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as
@@ -27,13 +27,14 @@ import sys
 import os
 import getopt
 from operator import itemgetter
+from datetime import date
 
 debug = 0
 
 
 def rel_html_license_verbose():
     print '-----------------------------------------------------------------------'
-    print 'Copyright (C) 2012-2013 Luis R. Rodriguez <mcgrof@do-not-panic.com>'
+    print 'Copyright (C) 2012-2014 Luis R. Rodriguez <mcgrof@do-not-panic.com>'
     print ''
     print 'This program is free software: you can redistribute it and/or modify'
     print 'it under the terms of the GNU Affero General Public License as'
@@ -859,8 +860,7 @@ class index_parser(HTMLParser):
             url + self.next_rel_month)
         self.next_rel_url   = url + \
             self.next_rel_month + '/' + self.next_rel_day
-        # XXX: automatically look for the largest year
-        self.next_rel_date_rfc3339  = '2013' + '-' + \
+        self.next_rel_date_rfc3339  = str(date.today().year) + '-' + \
             self.next_rel_month + '-' + self.next_rel_day
         self.next_rel_date = self.next_rel_date_rfc3339.replace("-", "")
         self.next_rel_dates.append(self.next_rel_date_rfc3339)
@@ -884,7 +884,7 @@ class index_parser(HTMLParser):
             if url.endswith('stable/'):
                 self.get_stable_ext_urls(url)
                 self.evaluate_stable_ext_urls()
-            elif url.endswith('2013/'):
+            elif url.endswith(str(date.today().year) + '/'):
                 self.get_next_url(url)
                 self.evaluate_next_url()
             else:
