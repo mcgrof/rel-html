@@ -358,6 +358,12 @@ class index_tarball_hunter(HTMLParser):
         p = re.compile(index_parser.release_extension + '$')
         rel_name = p.sub("", value)
 
+        base_release = ''
+        for r in index_parser.supported:
+            if (r in value):
+                base_release = r
+                break
+
         ver = rel_name.lstrip(rel_match['rel_name'] + '-')
 
         p = re.compile('-[usnpc]*$')
@@ -378,6 +384,7 @@ class index_tarball_hunter(HTMLParser):
             return
 
         tar = dict(version=short_ver,
+                   base_release=r,
                    weight=w,
                    rel=rel_name,
                    specifics=rel_specifics,
@@ -463,10 +470,27 @@ class index_tarball_hunter(HTMLParser):
                               specifics['RELMOD_UPDATE'],
                               specifics['RELMOD_TYPE']))
 
+    def is_biggest_tarball(self, pivot_tar, tars):
+        other_greater = 0
+        for tar in tars:
+            if pivot_tar.get('rel') == tar.get('rel'):
+                continue
+            if pivot_tar.get('base_release') == tar.get('base_release'):
+                if pivot_tar.get('weight') < tar.get('weight'):
+                    other_greater = other_greater + 1
+
+        if (other_greater == 0):
+            return True
+
+        return False
+
     def update_rel_candidates(self):
         index_parser = self.index_parser
         for tar in self.tarballs:
             index_parser.rel_html_rels.append(tar)
+        for tar in index_parser.rel_html_rels:
+            if not self.is_biggest_tarball(tar, index_parser.rel_html_rels):
+                index_parser.rel_html_rels.remove(tar)
 
     def is_next_rel(self, value):
         index_parser = self.index_parser
