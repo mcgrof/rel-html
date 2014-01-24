@@ -764,7 +764,7 @@ class index_parser(HTMLParser):
             self.release_extension = "." + \
                 self.config.get("project", "release_extension")
         else:
-            self.release_extension = ".tar.bz2"
+            self.release_extension = ".tar.xz"
 
         self.next_rel_day = 0
         self.next_rel_month = 0
